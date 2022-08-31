@@ -1,0 +1,781 @@
+
+
+-- A1)  vsechny druhy
+SELECT D.nazev FROM Druhy AS D;
+
+-- A2) zvirata lehci jak 50
+-SELECT Z.druh, Z.jmeno FROM Zvirata AS Z WHERE Z.vaha < 50;
+
+-- A3) vsechny zvirata zacinajici na A
+SELECT Z.jmeno FROM Zvirata AS Z WHERE Z.jmeno LIKE("A%");
+
+-- A4) jmena od a po z
+SELECT Z.jmeno FROM Zvirata AS Z ORDER BY Z.jmeno ASC;
+
+-- B1) Jmena Slonu
+ SELECT Z.jmeno, D.nazev FROM Zvirata AS Z JOIN Druhy AS D  ON (Z.druh = D.id) WHERE D.nazev LIKE("slon");
+
+-- B2) Druhy ktere maji zastupce Julie
+ SELECT D.nazev FROM Druhy AS D JOIN Zvirata AS Z ON (Z.druh = D.id) WHERE Z.jmeno LIKE("Julie");
+ 
+ -- B3) narozeni netopyra sisi
+ SELECT Z.narozen, Z.jmeno, D.nazev FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE Z.jmeno LIKE("Sisi") AND D.nazev LIKE("netopyr");
+ 
+ -- C1) 5 nejlehcich zvirat
+ SELECT Z.jmeno, Z.vaha FROM Zvirata AS Z ORDER BY Z.vaha ASC LIMIT 5;
+ 
+ -- C2) nejtezsi kralik
+ SELECT D.nazev, Z.jmeno, Z.vaha FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("kralik") ORDER BY Z.vaha DESC LIMIT 1;
+ 
+ -- C3) nejstarsi vlk
+ 
+ SELECT Z.jmeno, Z.narozen, D.nazev FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("vlk") ORDER BY Z.narozen ASC LIMIT 1;
+
+-- C1) 5 nejlehcich zvirat
+ SELECT Z.jmeno, Z.vaha FROM Zvirata AS Z ORDER BY Z.vaha ASC LIMIT 5;
+ 
+ -- C2) nejtezsi kralik
+ SELECT D.nazev, Z.jmeno, Z.vaha FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("kralik") ORDER BY Z.vaha DESC LIMIT 1;
+ 
+ -- C3) nejstarsi vlk  
+SELECT Z.jmeno, Z.narozen, D.nazev FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("vlk") ORDER BY Z.narozen ASC LIMIT 1;
+
+-- D1) Jména těžkých vlků ("těžké" znamená 50 nebo více)
+SELECT Z.jmeno FROM zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("vlk") AND Z.vaha >= 50;
+
+-- D2) Jméno nejtěžšího z lehkých pavouků ("lehké" znamená méně než 50)
+SELECT Z.jmeno, D.nazev, Z.vaha FROM zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE D.nazev LIKE("pavouk") AND Z.vaha <= 50 ORDER BY Z.vaha DESC LIMIT 1;
+
+-- D3) Jména všech zvířat začínajících na "A" nebo "B"
+SELECT Z.jmeno FROM Zvirata AS Z WHERE Z.jmeno LIKE("A%") OR Z.jmeno LIKE("B%");
+
+-- E1) Název druhu třetí nejstarší Julie
+SELECT D.nazev, Z.jmeno FROM Druhy AS D JOIN Zvirata AS Z ON (Z.druh = D.id) WHERE Z.jmeno LIKE("Julie") LIMIT 1 OFFSET 2;
+
+-- E2) Název druhu nejtěžšího zvířete narozeného v lednu 2003
+SELECT D.nazev, Z.narozen, Z.vaha FROM Druhy AS D JOIN Zvirata AS Z ON (Z.druh = D.id) WHERE YEAR(Z.narozen) = 2003 AND MONTH(Z.narozen) = 1 ORDER BY Z.vaha DESC LIMIT 1;
+
+-- E3) * Jména středně těžkých zvířat začínajících na "C" nebo končících na "a". (Středně těžké znamená "vážící mezi 50 a 100")
+SELECT Z.jmeno, Z.vaha FROM Zvirata AS Z WHERE Z.vaha BETWEEN 50 AND 100 AND Z.jmeno LIKE("C%") OR Z.jmeno LIKE("%A") AND Z.vaha BETWEEN 50 AND 100;
+
+-- F1)
+SELECT D.nazev, Z.jmeno, Z.vaha FROM Zvirata AS Z JOIN Druhy AS D ON (Z.druh = D.id) WHERE Z.vaha = (SELECT MAX(vaha) FROM Zvirata);
+
+
+-- G1) kdo osetruje nejtezsiho pavouka
+
+SELECT OP.jmeno, Z.jmeno, D.nazev, Z.vaha
+FROM Osetrovatele AS OP
+INNER JOIN Osetruje AS OS ON (OP.id = OS.osetrovatel)
+INNER JOIN Zvirata AS Z ON (OS.zvire = Z.id)
+INNER JOIN Druhy AS D ON (Z.druh = D.id)
+WHERE D.nazev LIKE("pavouk")
+ORDER BY Z.vaha DESC
+LIMIT 1;
+
+-- G2) Jména všech těžkých zvířat, které ošetřují lidé narození v roce 1950 ("těžké" je přes 50)
+
+SELECT OP.narozen, Z.jmeno, Z.vaha
+FROM Osetrovatele AS OP
+INNER JOIN Osetruje AS OS ON (OP.id = OS.osetrovatel)
+INNER JOIN Zvirata AS Z ON (OS.zvire = Z.id)
+WHERE Z.vaha > 50 AND YEAR(OP.narozen) = 1950;
+
+-- G3) Jména všech lidí, kteří mají rádi škvory
+
+SELECT OP.jmeno, D.nazev
+FROM Osetrovatele AS OP
+INNER JOIN ma_rad AS MR ON (MR.osetrovatel = OP.id)
+INNER JOIN druhy AS D ON (MR.druh = D.id)
+WHERE D.nazev LIKE("skvor");
+
+
+-- H1) Nejtěžší zvíře, které má rád ošetřovatel Luke JANSA
+
+SELECT OP.jmeno, Z.vaha
+FROM Osetrovatele AS OP
+INNER JOIN ma_rad AS MR ON (MR.osetrovatel = OP.id)
+INNER JOIN druhy AS D ON (MR.druh = D.id)
+INNER JOIN Zvirata AS Z ON (Z.druh = D.id)
+WHERE Z.vaha = (SELECT MAX(vaha) FROM zvirata) AND OP.jmeno LIKE("Luke JANSA");
+
+-- H2) Druhy všech lehkých zvířat, která ošetřují Emilové
+
+SELECT OP.jmeno, D.nazev
+FROM Osetrovatele AS OP
+INNER JOIN Osetruje AS OS ON (OP.id = OS.osetrovatel)
+INNER JOIN Zvirata AS Z ON (OS.zvire = Z.id)
+INNER JOIN druhy AS D ON (Z.druh = D.id)
+WHERE Z.vaha < 50 AND OP.jmeno LIKE("Emil%");
+
+-- H3)* Druh nejtěžšího zvířete, které ošetřuje nejstarší ošetřovatel
+
+
+SELECT D.nazev, OP.narozen
+FROM Osetrovatele AS OP
+INNER JOIN Osetruje AS OS ON (OP.id = OS.osetrovatel)
+INNER JOIN Zvirata AS Z ON (OS.zvire = Z.id)
+INNER JOIN Druhy AS D ON (Z.druh = D.id)
+WHERE Z.vaha = (SELECT MAX(vaha) FROM zvirata) ORDER BY OP.narozen ASC LIMIT 1
+
+-- N1) Které druhy mají pouze těžká zvířata (zvířata vážící přes 50)
+
+SELECT D.nazev
+FROM zvirata AS Z
+JOIN druhy   AS D
+ON (D.id = Z.druh)
+GROUP BY druh
+HAVING MIN(vaha) > 50;
+
+-- N2) Který druh má nejvyšší váhový průměr?
+
+SELECT D.nazev, AVG(Z.vaha)
+FROM zvirata AS Z
+JOIN druhy AS D
+ON (D.id = Z.druh)
+GROUP BY druh
+ORDER BY AVG(Z.vaha) DESC
+LIMIT 1;
+
+-- N3*) Kolik zvířat s láskou ošetřují jednotliví ošetřovatelé?
+
+SELECT OP.jmeno, COUNT(DISTINCT Z.druh)
+FROM zvirata  AS Z
+JOIN osetruje  AS OS ON ( Z.id = OS.zvire)
+JOIN osetrovatele AS OP ON (OP.id = OS.osetrovatel)
+JOIN ma_rad  AS MR ON (OP.id = MR.osetrovatel)
+GROUP BY OP.jmeno;
+
+
+-- P1) nikdo nema rad, pocet
+
+
+
+SELECT COUNT(D.nazev) FROM Druhy AS D
+
+LEFT JOIN ma_rad AS MR ON (MR.druh = D.id)
+
+WHERE MR.druh IS NULL
+
+
+
+-- 1) Které druhy mají průměrnou váhu přes 50?
+
+SELECT D.nazev, AVG(Z.vaha) AS AverageWeight
+FROM Zvirata AS Z JOIN Druhy AS D ON (D.id = Z.druh)
+GROUP BY D.id
+HAVING AverageWeight > 50;
+
+-- 2) Kdo je ošetřovatelem největšího počtu andulek?
+
+SELECT OP.jmeno AS Osetrovatel, D.nazev AS NazevDruhu, COUNT(OS.zvire) AS AnimalCount
+FROM Osetrovatele AS OP
+JOIN Osetruje AS OS ON (OS.osetrovatel = OP.id)
+JOIN Zvirata AS Z ON (Z.id = OS.zvire)
+JOIN Druhy AS D ON (D.id = Z.druh)
+GROUP BY OP.jmeno, D.nazev
+HAVING D.nazev LIKE ("andulka")
+ORDER BY AnimalCount DESC LIMIT 2;
+
+-- 3) Vypište celkový počet "denních chodů" za předpokladu, že každý ošetřovatel nakrmí každého ze svých svěřenců 2x denně
+
+SELECT (COUNT(OS.zvire) * 2)
+FROM Osetruje AS OS;
+
+-- R1) Kteří ošetřovatelé nemají rádi vrabce?
+ 
+ SELECT OP.jmeno
+ FROM osetrovatele AS OP
+ LEFT JOIN ma_rad AS MR ON (MR.osetrovatel = OP.id)
+ LEFT JOIN druhy AS D ON (MR.druh = D.id)
+ WHERE D.nazev NOT LIKE("Vrabec");
+
+-- pv0) vyhynule druhy, zadni zastupci
+
+SELECT D.nazev FROM Druhy AS D
+LEFT JOIN Zvirata AS Z ON (D.id = Z.druh)
+WHERE Z.druh IS NULL;
+
+-- pv1) vsechna tvirata nktera nema nikdo rad
+
+SELECT Z.jmeno FROM zvirata AS Z
+LEFT JOIN ma_rad AS MR ON (Z.druh = MR.druh)
+LEFT JOIN druhy AS D ON (MR.druh = D.id)
+WHERE MR.druh IS NULL;
+
+-- pv2) vsechny kachny ktere nema nikdo rad
+
+SELECT Z.jmeno FROM zvirata AS Z
+LEFT JOIN ma_rad AS MR ON (Z.druh = MR.druh)
+LEFT JOIN druhy AS D ON (MR.druh = D.id)
+WHERE MR.druh IS NULL AND D.nazev LIKE("Kachna"); -- v db je misto kachna "kacena"
+
+-- PV2.5) Osetrovatele kteri neosetrují kachny
+SELECT OP.jmeno
+
+FROM zvirata AS Z
+JOIN druhy AS D
+ON (Z.druh = D.id AND D.nazev LIKE ("kachna"))  -- v db je misto kachna "kacena"
+
+JOIN osetruje AS OS
+ON (OS.zvire = Z.id)
+
+RIGHT JOIN osetrovatele AS OP
+ON (OP.id = OS.osetrovatel)
+
+WHERE OS.zvire IS NULL;
+
+
+--pv5
+SELECT OS.jmeno
+FROM Osetrovatele AS OS
+JOIN Osetruje AS O ON (O.osetrovatel = OS.id)
+WHERE OS.id NOT IN
+(
+SELECT MR.osetrovatel
+FROM Ma_Rad AS MR
+);
+
+
+-- S1) Zvířata, která jsou krmena osobou, která je nemá ráda
+
+ 
+
+SELECT Z.jmeno
+
+FROM Zvirata AS Z
+
+JOIN Osetruje AS O ON (Z.id = O.zvire)
+
+WHERE O.osetrovatel NOT IN
+
+(
+
+SELECT MR.osetrovatel
+
+FROM  Ma_Rad AS MR
+
+WHERE MR.druh = Z.druh
+
+)LIMIT 5000; -- inspo Max
+
+ 
+
+-- S2) Neošetřovaná, a přesto milovaná zvířata
+
+ 
+
+SELECT Z.jmeno
+
+FROM Zvirata AS Z
+
+ 
+
+JOIN Ma_Rad AS MR ON (MR.druh = Z.druh)
+
+WHERE Z.id NOT IN
+
+(
+
+SELECT O.zvire
+
+FROM Osetruje AS O
+
+)
+
+GROUP BY Z.id;
+
+ 
+
+-- S3) * Neošetřovaná a současně nemilovaná zvířata ?
+
+ 
+
+SELECT Z.jmeno
+
+FROM Ma_rad AS MR
+
+ 
+
+JOIN Zvirata AS Z ON (MR.druh = Z.druh)
+
+WHERE Z.id IN
+
+(
+
+SELECT O.zvire
+
+FROM Osetruje AS O
+
+)
+
+GROUP BY Z.id;
+
+-- netusim xd
+
+SELECT DISTINCT Z.jmeno
+ 
+FROM Zvirata AS Z
+JOIN Druhy   AS D ON (Z.druh = D.id)
+
+WHERE Z.id NOT IN
+(
+SELECT Z.id
+
+FROM Zvirata  AS Z
+JOIN Osetruje AS O ON (Z.id = O.zvire)
+
+WHERE O.osetrovatel IN
+  (
+  SELECT MR.osetrovatel
+  FROM Ma_Rad AS MR
+  WHERE (MR.druh != Z.druh)
+  )
+);
+
+-- U1)  Jména nejlehčích zvířat (Všechna zvířata, která váží stejně jako nejlehčí)
+SELECT Z.jmeno
+FROM Zvirata AS Z
+
+WHERE Z.vaha IN
+
+(
+SELECT MIN(Z.vaha)
+FROM Zvirata AS Z
+);
+
+-- U2) Která zvířata (jméno a druh) ošetřuje nejstarší ošetřovatel?
+SELECT Z.jmeno, D.nazev
+
+FROM Osetruje AS OS
+JOIN Zvirata AS Z ON (OS.zvire = Z.id  )
+JOIN Druhy   AS D ON (D.id     = Z.druh)
+
+WHERE OS.osetrovatel IN
+(
+SELECT OP.id
+FROM Osetrovatele AS OP
+
+WHERE OP.narozen IN
+(
+SELECT MIN(OP.narozen)
+FROM Osetrovatele OP
+)
+);
+
+-- U3) Jméno nejlehčího zvířete s více než jedním ošetřovatelem
+
+SELECT Z.jmeno, Z.vaha, COUNT(OS.zvire) AS "Pocet Osetrovatelu"
+
+FROM Zvirata AS Z
+JOIN Osetruje AS OS ON (OS.zvire = Z.id)
+
+WHERE Z.vaha IN
+(
+SELECT MIN(Z.vaha)
+FROM Zvirata AS Z
+)
+HAVING COUNT(OS.zvire) > 1
+
+
+-- PV0) Vyhynulé druhy (Druhy bez zvírat)
+SELECT D.nazev
+FROM Druhy AS D
+WHERE D.id NOT IN
+(
+SELECT DISTINCT Z.druh
+FROM Zvirata AS Z
+);
+
+-- PV1) Všechna zvírata, ktere nikdo nema rad
+SELECT Z.jmeno
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (Z.druh = D.id)
+WHERE D.id NOT IN
+(
+SELECT MR.druh
+FROM Ma_Rad AS MR
+);
+
+-- PV2) Všechny kachny, které nikdo nemá rád
+SELECT Z.jmeno, D.nazev
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (Z.druh = D.id)
+WHERE D.nazev LIKE ("Kacena") AND Z.id NOT IN
+(
+SELECT Z.id
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (Z.druh = D.id)
+JOIN Ma_Rad AS MR ON (MR.druh = D.id)
+);
+
+-- PV2.5) Osetrovatele, kteri neosetruji kachny
+SELECT OS.jmeno
+FROM Osetrovatele AS OS
+WHERE OS.id NOT IN
+(
+SELECT O.osetrovatel
+FROM Osetruje AS O
+JOIN Zvirata AS Z ON (Z.id = O.zvire)
+JOIN Druhy AS D ON (D.id = Z.druh)
+WHERE D.nazev LIKE("Kacena")
+);
+
+
+-- PV3) Osetrovatele, kteri nikoho neosetruji
+SELECT Os.jmeno
+FROM Osetrovatele AS OS
+WHERE OS.id NOT IN
+(
+SELECT OS.id
+FROM Osetrovatele AS OS
+JOIN Osetruje AS O ON (O.osetrovatel = OS.id)
+);
+
+-- PV4) Vsichni tezci oslove, ktere nikdo neosetruje
+SELECT Z.jmeno
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (Z.druh = D.id)
+
+WHERE Z.vaha > 50 AND D.nazev LIKE("Osel") AND Z.id NOT IN
+(
+SELECT Z.id
+FROM Zvirata AS Z
+JOIN Osetruje AS O ON (O.zvire = Z.id)
+);
+
+-- PV 4.5) Osetrovatele, kteri neosetruji tezke osly
+SELECT OS.jmeno
+FROM Osetrovatele AS OS
+
+WHERE OS.id NOT IN
+(
+SELECT OS.id
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (Z.druh = D.id)
+JOIN Osetruje AS O ON (O.zvire = Z.id)
+JOIN Osetrovatele AS OS ON (O.osetrovatel = OS.id)
+WHERE D.nazev LIKE("Osel") AND Z.vaha > 50
+);
+
+-- PV5) Osetrovatele, kteri nikoho nemaji radi
+SELECT OS.jmeno
+FROM Osetrovatele AS OS
+
+WHERE OS.id NOT IN
+(
+SELECT OS.id
+FROM Osetrovatele AS OS
+JOIN Ma_Rad AS MR ON (MR.osetrovatel = OS.id)
+JOIN Druhy AS D ON (D.id = MR.druh)
+);
+
+-- R1) kteří ošetřovatelé nemají rádi vrabce?
+SELECT DISTINCT OS.jmeno
+FROM ma_rad AS MR
+LEFT JOIN druhy AS D ON (MR.druh = D.id AND D.nazev LIKE ("vrabec"))
+JOIN osetrovatele AS OS ON (MR.osetrovatel = OS.id)
+WHERE D.nazev IS NULL; -- inspirace od Maxe
+
+-- R1) kteří ošetřovatelé nemají rádi vrabce?
+
+SELECT DISTINCT OS.jmeno
+FROM Osetrovatele AS OS
+WHERE OS.id NOT IN
+(
+SELECT MR.osetrovatel
+FROM Ma_Rad AS MR
+JOIN Druhy AS D ON (MR.druh = D.id)
+WHERE D.nazev LIKE("Vrabec")
+); -- moje reseni
+
+
+-- R2) Nejvice nenavistny osetrovatel
+
+SELECT DISTINCT OS.jmeno, COUNT(MR.druh) AS MaRadDruhu
+FROM Osetrovatele AS OS
+JOIN Ma_Rad AS MR ON (MR.osetrovatel = OS.id)
+GROUP BY OS.jmeno
+ORDER BY COUNT(MR.druh) ASC
+LIMIT 1;
+
+
+-- R3) kolik tezkych zvirat (vaha > 50) je krmeno mene nez dvema osetrovateli
+
+SELECT Z.jmeno
+FROM Zvirata AS Z
+
+WHERE Z.vaha > 50 AND Z.id IN
+(
+SELECT O.zvire
+FROM Osetruje AS O
+HAVING COUNT(O.osetrovatel) < 2
+);
+
+-- Extrazz:
+-- Ag4: Pro každý druh vypište ošetřovatele, který ošetřuje nejvíce zvířat z tohoto druhu.
+
+SELECT DISTINCT D.nazev, OP.jmeno, COUNT(Z.id)
+
+FROM Osetruje AS O
+JOIN Zvirata AS Z ON (O.zvire = Z.id)
+JOIN Osetrovatele AS OP ON (OP.id = O.osetrovatel)
+JOIN Druhy AS D ON (D.id = Z.druh)
+
+WHERE D.id IN 
+(
+SELECT Z2.druh
+FROM zvirata AS Z2
+JOIN druhy AS D2 ON (D2.id = Z2.druh)
+WHERE (D2.id = D.id)
+GROUP BY D2.id
+)
+
+GROUP BY D.id
+ORDER BY COUNT(Z.id) DESC;
+
+
+
+-- Ag5: Vypište všechny ošetřovatele, kteří ošetřují (kterékoliv) nejtěžší zvíře (a jméno tohoto zvířete)
+
+SELECT OP.jmeno, Z.jmeno, Z.vaha
+
+FROM Zvirata AS Z
+JOIN Druhy AS D ON (D.id = Z.druh)
+JOIN Osetruje AS O ON (Z.id = O.zvire)
+JOIN Osetrovatele AS OP ON (O.osetrovatel = OP.id)
+
+WHERE Z.vaha = 
+(
+SELECT MAX(Z.vaha)
+FROM Zvirata AS Z
+)
+GROUP BY OP.id;
+
+-- Z)
+-- Vypište nejplodnější den v týdnu (tzn. den v týdnu: Pondělí, úterý..., kdy se narodilo nejvíce zvířat). Nezáleží na tom, jakým jazykem nebo jestli to bude zkratka
+-- K úspěšnému řešení asi budete potřebovat mrknout do manuálu na funkce pro manipulaci s datem a časem
+
+SELECT WEEKDAY(Z.narozen) AS Cislo_Dne, DAYNAME(Z.narozen) AS Den, COUNT(Z.narozen) AS Pocet_Narozeni
+FROM Zvirata AS Z
+GROUP BY WEEKDAY(Z.narozen)
+ORDER BY COUNT(Z.narozen) DESC;
+
+
+-- A) vypsat jména a příjmení v opačném pořadí, neš jsou v DB
+-- Pavel Suchánek - > Suchánek Pavel
+
+SELECT
+CONCAT(
+SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1),
+LOWER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+2)),
+" ",
+SUBSTR(O.jmeno, 1, LOCATE(" ", O.jmeno)-1)
+)
+AS Prijmeni_Jmeno,
+LENGTH
+(
+CONCAT
+(
+SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1),
+LOWER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+2)),
+" ",
+SUBSTR(O.jmeno, 1, LOCATE(" ", O.jmeno)-1)
+)
+) AS Delka_Reversed,
+
+O.jmeno,
+LENGTH(O.jmeno) AS Delka_Jmeno
+FROM Osetrovatele AS O;
+
+-- B) Vypsat iniciály všech ošetřovatelů
+-- Pavel Suchánek -> PS
+
+SELECT
+CONCAT
+(
+SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1),
+SUBSTR(O.jmeno, 1, 1)
+)
+AS inicialy_Prijmeni_jmeno,
+
+CONCAT
+(
+SUBSTR(O.jmeno, 1, 1),
+SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1)
+)
+AS inicialy_Jmeno_Prijmeni,
+O.jmeno
+FROM Osetrovatele AS O;
+
+
+Lukáš Petráček <lukas.petracek@educanet.cz>
+Thu, Sep 16, 2021, 1:10 PM
+to Lampíř
+
+Je to i s bonusem, příjmení mají jen první písmeno velké
+
+čt 16. 9. 2021 v 13:04 odesílatel Lukáš Petráček <lukas.petracek@educanet.cz> napsal:
+
+
+--
+Petráček Lukáš
+Žák C3, IT.
+EDUCAnet - gymnázium, SOŠ a základní škola Praha s.r.o
+
+Lukáš Petráček <lukas.petracek@educanet.cz>
+Wed, Sep 22, 2021, 12:06 PM
+to Lampíř
+
+-- Fx1: Zjistěte, který den v týdnu (pondělí, úterý, ...) se narodilo nejvíc psů. Den v týdnu můžete vypsat libovolným způsobem (anglicky (Monday), zkratkou (Mon); případně číslovkou, pokud ovšem víte, které číslo je který den)
+-- Pokud se někdo cítíte drsně, vypište to normálně česky (pondělí, úterý...)
+
+SELECT DAYNAME(Z.narozen) AS den, COUNT(Z.narozen) AS pocet
+FROM zvirata AS Z
+JOIN druhy AS D ON (Z.druh = D.id)
+WHERE D.nazev LIKE("pes")
+GROUP BY den
+ORDER BY pocet DESC
+LIMIT 1;
+
+-- Fx2: Vypište všechny ošetřovatele, kteří mají iniciály ve tvaru "X.X." - tedy mají stejná první znak křestního jména a příjmení (Adam Albín, Zuzana Zásadová, Konrád Klaus, ....).
+-- Pokud se někdo cítíte drsně, tak řešte i písmeno "Ch" (Christian Charouz) - odměnou bude bodový bonus a úsměv učitelův :P
+
+SELECT CONCAT
+(
+IF(STRCMP(UPPER(SUBSTR(O.jmeno, 1, 2)),"CH") = 0, UPPER(SUBSTR(O.jmeno, 1, 2)), UPPER(SUBSTR(O.jmeno, 1, 1))),
+IF(STRCMP(UPPER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 2)), "CH") = 0, UPPER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 2)), UPPER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1)))
+)
+AS inicialy,
+O.jmeno
+FROM Osetrovatele AS O
+WHERE UPPER(SUBSTR(O.jmeno, 1, 2)) LIKE(UPPER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 2)))
+OR UPPER(SUBSTR(O.jmeno, 1, 1)) LIKE(UPPER(SUBSTR(O.jmeno, LOCATE(" ", O.jmeno)+1, 1)));
+
+-- vypsat stary, mlady, ok (0-36 mlady, 37 - 65 ok, 66+ stary)
+SELECT IF(
+FLOOR(DATEDIFF(CURDATE(), narozen)/365.242199) < 37, "mlady", IF(FLOOR(DATEDIFF(CURDATE(), narozen)/365.25) < 66, "ok", "stary")) AS vekovaSkupina,
+FLOOR(DATEDIFF(CURDATE(), narozen)/365.242199) AS vek,
+jmeno,
+narozen
+FROM Osetrovatele;
+
+
+-- pridat prijmeni zviratum podle toho kdy se narodili
+-- mesic || 12 - 2 zimni, 3 - 5 jarni, 6 - 8 letni, 9 - 11 podzimni
+UPDATE zvirata SET jmeno =
+CONCAT(jmeno, " ",
+IF(MONTH(narozen) <= 2 OR MONTH(narozen) = 12, "zimni",
+IF(MONTH(narozen) <= 5, "jarni",
+IF(MONTH(narozen) <= 8, "letni", "podzimni")
+)));
+
+
+
+-- Fx3: Vymažte všechny ošetřovatele, kteří nikoho neošetřují
+DELETE FROM Osetrovatele
+WHERE id NOT IN
+(
+SELECT osetrovatel
+FROM osetruje
+);
+
+-- Fx4: Všem ošetřovatelům s příjmením kratším než 6 znaků přidejte mezi jméno a příjmení titul "von"
+UPDATE osetrovatele
+SET jmeno = CASE WHEN LENGTH(SUBSTR(jmeno,LOCATE(" ", jmeno)+1, LENGTH(jmeno))) < 6
+THEN REPLACE(jmeno, " ", " von ")
+ELSE jmeno
+END;
+-- Credit Robin za ukázání existence a vysvětlení CASE
+
+
+-- Fx5: Vyplňte správnými hodnotami sloupec "vaha_max" tabulky Druhů.
+UPDATE druhy AS D
+SET D.vaha_max = (
+SELECT MAX(vaha)
+FROM zvirata
+JOIN druhy AS D2 ON (D2.id = druh)
+WHERE D.id = D2.id
+GROUP BY D.id
+);
+
+-- Fx6: * Vypište nejčastější křestní jméno ošetřovatelů, kteří jsou dohromady se všemi svými svěřenci starší než 200 let
+-- (tzn. součet aktuálních věků v letech ošetřovatele a všech jeho svěřenců je vyšší než 200).
+SELECT SUBSTRING(OP.jmeno, 1, LOCATE(" ", OP.jmeno)-1) AS nejcastejsi_krestni_jmeno
+FROM (
+      SELECT OP.id, OP.narozen
+      FROM osetrovatele AS OP
+      JOIN osetruje AS OS ON (OS.osetrovatel = OP.id)
+      JOIN zvirata AS Z ON (Z.id = OS.zvire)
+      GROUP BY OP.id
+      HAVING SUM(TIMESTAMPDIFF(YEAR, Z.narozen, CURDATE())) + TIMESTAMPDIFF(YEAR, OP.narozen, CURDATE()) > 200
+     )
+     AS soucty
+JOIN osetrovatele AS OP ON (OP.id = soucty.id)
+GROUP BY nejcastejsi_krestni_jmeno
+ORDER BY COUNT(OP.id) DESC
+LIMIT 1;
+
+
+
+- krel novak -> Narel Kovak
+UPDATE osetrovatele
+SET jmeno = CONCAT(SUBSTR(jmeno, LOCATE(" ", jmeno)+1, 1), SUBSTR(jmeno, 2, LOCATE(" ",jmeno)-2), " ", SUBSTR(jmeno, 1,1), SUBSTR(jmeno, LOCATE(" ", jmeno)+2));
+
+
+--  pro kazde zvire vypiste jestli je kriticky ohrozene(posledni), ohrozene( max 5),bezne(11+), malo dotcene(6-10) nic
+SELECT Z.jmeno, D.nazev, pocet,
+CASE
+WHEN pocet = 1 THEN "kriticky ohrozene"
+WHEN pocet IN(2,3,4,5) THEN "ohrozene"
+        WHEN pocet IN(6,7,8,9,10) THEN ""
+WHEN pocet > 10 THEN "bezne"
+ELSE ""
+END AS status_druhu
+FROM zvirata AS Z
+JOIN Druhy AS D ON (D.id = Z.druh)
+JOIN (
+      SELECT D2.id, D2.nazev, COUNT(D2.id) AS pocet
+      FROM zvirata AS Z2
+      JOIN druhy AS D2 ON (D2.id = Z2.druh)
+      GROUP BY Z2.druh
+      )
+      AS pocty ON (D.id = pocty.id);
+
+UPDATE zvirata AS z
+JOIN (
+SELECT z2.id, z2.jmeno, COUNT(o.zvire) AS cnt
+FROM zvirata AS z2
+JOIN osetruje AS o ON (z2.id = o.zvire)
+GROUP BY o.zvire
+ORDER BY cnt DESC
+) AS likes ON (z.id = likes.id)
+SET z.jmeno = CONCAT(z.jmeno,
+CASE
+WHEN likes.cnt < 3 THEN " Nemilovany"
+WHEN likes.cnt < 10 AND likes.cnt >= 3 THEN " Standartni"
+ELSE " Milovany"
+END
+);
+
+-- 1) Dotaz (fungujici na libovolnych datech), ktery ostarsi kazdeho osetrovatele o 4r
+UPDATE osetrovatele AS op
+SET op.narozen = DATE_ADD(op.narozen, INTERVAL 4 YEAR);
+-- 2) dotaz ktery vypise prumerny vek vsech sverencu kazdeho osetrovatele v letech (aktualni datum, zaokrouhleni dolu)
+SELECT OP.jmeno AS JmenoOsetrovatele, FLOOR(AVG(FLOOR(DATEDIFF(CURDATE(), z.narozen) / 365.2425))) AS PrumernyVekSvverence
+FROM osetrovatele AS OP
+JOIN osetruje AS OS ON (OP.id = OS.osetrovatel)
+JOIN zvirata AS Z ON (Z.id = OS.zvire)
+GROUP BY OS.osetrovatel;
+
+-- 3) dotaz 1. upravit, aby ostarsil o tolik mesicu, kolik je aktualni prumer veku jeho sverencu
+UPDATE osetrovatele AS OP
+JOIN (
+SELECT OP.jmeno AS JmenoOsetrovatele, ROUND(AVG(ROUND(DATEDIFF(CURDATE(), z.narozen) / 365.2425))) AS PrumerVek
+FROM osetrovatele AS OP
+JOIN osetruje AS OS ON (OP.id = OS.osetrovatel)
+JOIN zvirata AS Z ON (Z.id = OS.zvire)
+GROUP BY OS.osetrovatel
+) AS OsetrovatelAPrumer
+SET OP.narozen = (DATE_ADD(OP.narozen, INTERVAL PrumerVek MONTH))
+WHERE OP.jmeno = JmenoOsetrovatele;
